@@ -1,25 +1,35 @@
-# Use the official Ubuntu base image
-FROM ubuntu:latest
-
-# Set environment variables
-ENV DEBIAN_FRONTEND=noninteractive
+FROM debian
 
 # Install necessary packages
-RUN apt-get update && apt-get install -y \
-    xvfb \
-    fluxbox \
-    x11vnc \
-    novnc \
-    websockify \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+RUN dpkg --add-architecture i386 && \
+    apt update && \
+    DEBIAN_FRONTEND=noninteractive apt install -y \
+    wine \
+    qemu-kvm \
+    fonts-arphic-uming \
+    xz-utils \
+    dbus-x11 \
+    curl \
+    firefox-esr \
+    gnome-system-monitor \
+    mate-system-monitor \
+    git \
+    xfce4 \
+    xfce4-terminal \
+    tightvncserver \
+    wget \
+    apache2-utils
+
+# Download noVNC
+RUN wget https://github.com/novnc/noVNC/archive/refs/tags/v1.2.0.tar.gz && \
+    tar -xvf v1.2.0.tar.gz
+
+# Set up noVNC
+RUN mkdir -p /etc/nginx/.vnc && \
+    echo "luo:`openssl passwd -apr1 YourPassword`" > /etc/nginx/.vnc/.htpasswd
 
 # Expose ports
-EXPOSE 8080
+EXPOSE 80
 
-# Set the entry point to launch NoVNC server
-CMD ["bash", "-c", "Xvfb :1 -screen 0 1024x768x16 & \
-    sleep 5 && \
-    fluxbox & \
-    x11vnc -display :1 -nopw -listen localhost -xkb -forever & \
-    websockify --web /usr/share/novnc/ 8080 localhost:5900"]
+# Configure and start noVNC with basic authentication
+CMD ["bash", "-c", "cd /noVNC-1.2.0 && ./utils/launch.sh --vnc localhost:5901 --listen 80 --web /noVNC-1.2.0 --ssl-only --ssl-key /etc/nginx/ssl/server.key --ssl-cert /etc/nginx/ssl/server.crt --http-auth /etc/nginx/.vnc/.htpasswd"]
