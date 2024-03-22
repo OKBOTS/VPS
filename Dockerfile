@@ -32,4 +32,4 @@ RUN mkdir -p /etc/nginx/.vnc && \
 EXPOSE 80
 
 # Configure and start noVNC with basic authentication
-CMD ["bash", "-c", "cd /noVNC-1.2.0 && ./utils/launch.sh --vnc localhost:5901 --listen 80 --web /noVNC-1.2.0 --ssl-only --ssl-key /etc/nginx/ssl/server.key --ssl-cert /etc/nginx/ssl/server.crt --http-auth /etc/nginx/.vnc/.htpasswd"]
+CMD ["bash", "-c", "cd /noVNC-1.2.0 && ./utils/launch.sh --vnc localhost:5901 --listen 80 --web /noVNC-1.2.0 --http-auth /etc/nginx/.vnc/.htpasswd"]
