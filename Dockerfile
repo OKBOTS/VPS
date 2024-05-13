@@ -1,35 +1,20 @@
-FROM debian
+# Use an official Node.js runtime as a parent image
+FROM node:18
 
-# Install necessary packages
-RUN dpkg --add-architecture i386 && \
-    apt update && \
-    DEBIAN_FRONTEND=noninteractive apt install -y \
-    wine \
-    qemu-kvm \
-    fonts-arphic-uming \
-    xz-utils \
-    dbus-x11 \
-    curl \
-    firefox-esr \
-    gnome-system-monitor \
-    mate-system-monitor \
-    git \
-    xfce4 \
-    xfce4-terminal \
-    tightvncserver \
-    wget \
-    apache2-utils
+# Set the working directory in the container
+WORKDIR /usr/src/app
 
-# Download noVNC
-RUN wget https://github.com/novnc/noVNC/archive/refs/tags/v1.2.0.tar.gz && \
-    tar -xvf v1.2.0.tar.gz
+# Copy package.json and package-lock.json to the working directory
+COPY package*.json ./
 
-# Set up noVNC
-RUN mkdir -p /etc/nginx/.vnc && \
-    echo "luo:`openssl passwd -apr1 YourPassword`" > /etc/nginx/.vnc/.htpasswd
+# Install dependencies
+RUN npm install
 
-# Expose ports
-EXPOSE 80
+# Copy the rest of the application code to the working directory
+COPY . .
 
-# Configure and start noVNC with basic authentication
-CMD ["bash", "-c", "cd /noVNC-1.2.0 && ./utils/launch.sh --vnc localhost:5901 --listen 80 --web /noVNC-1.2.0 --http-auth /etc/nginx/.vnc/.htpasswd"]
+# Expose the port that your app runs on
+EXPOSE 3000
+
+# Define the command to run your app
+CMD ["node", "app.js"]
