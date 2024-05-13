@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pastebin</title>
+  <style>
+    html {
+      --s: 50px;
+      --c: #191b22;
+      --_s: calc(2*var(--s)) calc(2*var(--s));
+      --_g: 35.36% 35.36% at;
+      --_c: #0000 66%,#20222a 68% 70%,#0000 72%;
+      background: 
+        radial-gradient(var(--_g) 100% 25%,var(--_c)) var(--s) var(--s)/var(--_s), 
+        radial-gradient(var(--_g) 0 75%,var(--_c)) var(--s) var(--s)/var(--_s), 
+        radial-gradient(var(--_g) 100% 25%,var(--_c)) 0 0/var(--_s), 
+        radial-gradient(var(--_g) 0 75%,var(--_c)) 0 0/var(--_s), 
+        repeating-conic-gradient(var(--c) 0 25%,#0000 0 50%) 0 0/var(--_s), 
+        radial-gradient(var(--_c)) 0 calc(var(--s)/2)/var(--s) var(--s) var(--c);
+      background-attachment: fixed;
+      font-family: 'Courier New', Courier, monospace;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      max-width: 500px;
+      width: 100%;
+      padding: 20px;
+      background-color: #24175f; /* Dark purple background */
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 24px;
+      text-align: center;
+      color: #fff;
+    }
+    textarea {
+      width: 96%;
+      height: 200px;
+      margin-bottom: 20px;
+      padding: 10px;
+      border: 1px solid #51447c; /* Light purple border */
+      border-radius: 4px;
+      resize: none;
+      background-color: #675194; /* Medium purple background */
+      color: #fff;
+    }
+    button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      background-color: #9051d6; /* Lighter purple button */
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      color: #fff;
+    }
+    button:hover {
+      background-color: #b880ff; /* Lighter purple hover effect */
+    }
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #24175f; /* Dark purple background for popup */
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+      z-index: 9999;
+      display: none;
+    }
+    .popup.show {
+      display: block;
+    }
+    .popup h2 {
+      color: #fff;
+      text-align: center;
+    }
+    .popup p {
+      color: #fff;
+      margin-bottom: 10px;
+    }
+    .popup input[type="text"] {
+      width: calc(100% - 80px);
+      padding: 8px;
+      border: none;
+      border-radius: 4px;
+      background-color: #3a246c; /* Darker purple background */
+      color: #fff;
+      margin-right: 10px;
+    }
+    .popup button {
+      padding: 8px 12px;
+      background-color: #9051d6; /* Lighter purple button */
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      color: #fff;
+    }
+    .popup button:hover {
+      background-color: #b880ff; /* Lighter purple hover effect */
+    }
+    .close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+      color: #fff;
+    }
+    .close:hover {
+      color: #999;
+    }
+    #copiedMessage {
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #9051d6; /* Lighter purple message */
+      color: #fff;
+      padding: 10px;
+      border-radius: 4px;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Paste your text</h1>
+    <form id="uploadForm" action="/upload" method="POST">
+      <textarea name="text" id="textInput" placeholder="Paste your text here"></textarea>
+      <button type="button" onclick="submitForm()">Upload</button>
+    </form>
+  </div>
+
+  <div class="popup" id="popup">
+    <span class="close" onclick="closePopup()">&times;</span>
+    <h2>File Uploaded Successfully!</h2>
+    <p>URL:</p>
+    <input type="text" id="fileURL" readonly>
+    <button onclick="copyLink()">Copy</button>
+  </div>
+
+  <div id="copiedMessage">URL Copied!</div>
+
+  <script>
+    function submitForm() {
+      var form = document.getElementById('uploadForm');
+      var text = document.getElementById('textInput').value;
+      var xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+          if (xhr.status === 200) {
+            var fileURL = xhr.responseText;
+            var popup = document.getElementById('popup');
+            var fileURLInput = document.getElementById('fileURL');
+            fileURLInput.value = fileURL;
+            popup.classList.add('show');
+            copyLink(); // Auto copy the URL
+          } else {
+            console.error('Error:', xhr.status);
+            alert('Error uploading file. Please try again.');
+          }
+        }
+      };
+      xhr.open('POST', '/upload');
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.send('text=' + encodeURIComponent(text));
+    }
+
+    function copyLink() {
+      var fileURLInput = document.getElementById('fileURL');
+      fileURLInput.select();
+      document.execCommand('copy');
+      var copiedMessage = document.getElementById('copiedMessage');
+      copiedMessage.style.display = 'block';
+      setTimeout(function() {
+        copiedMessage.style.display = 'none';
+        closePopup(); // Close popup after 2 seconds
+      }, 2000); // Hide after 2 seconds
+    }
+
+    function closePopup() {
+      var popup = document.getElementById('popup');
+      popup.classList.remove('show');
+    }
+  </script>
+</body>
+</html>
